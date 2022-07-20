@@ -439,3 +439,73 @@ teste
 
 ```
 
+## FIGURE: Functional Predicting
+
+
+```{r}
+
+#Building tables
+
+#Bulk
+t1 <- trans_func$new(dataset.bk)
+t1$cal_spe_func(prok_database = "FAPROTAX")
+t1$cal_spe_func_perc(abundance_weighted = FALSE)
+bk.genes = as.data.frame(t1$res_spe_func_perc)
+bk.all = cbind(bk.genes, map_bk)
+
+#Cecropia
+t2 <- trans_func$new(dataset.cec)
+t2$cal_spe_func(prok_database = "FAPROTAX")
+t2$cal_spe_func_perc(abundance_weighted = FALSE)
+cec.genes = as.data.frame(t2$res_spe_func_perc)
+cec.all = cbind(cec.genes, map_cec)
+
+#Peltophorum
+t3 <- trans_func$new(dataset.pel)
+t3$cal_spe_func(prok_database = "FAPROTAX")
+t3$cal_spe_func_perc()
+pel.genes = as.data.frame(t3$res_spe_func_perc)
+pel.all = cbind(pel.genes, map_pel)
+
+#Cedrela
+t4 <- trans_func$new(dataset.ced)
+t4$cal_spe_func(prok_database = "FAPROTAX")
+t4$cal_spe_func_perc(abundance_weighted = FALSE)
+ced.genes = as.data.frame(t4$res_spe_func_perc)
+ced.all = cbind(ced.genes, map_ced)
+
+genes = rbind(bk.all, cec.all, pel.all, ced.all)
+
+View(genes)
+
+######################################
+
+t1 <- trans_func$new(dataset)
+# https://chiliubio.github.io/microeco_tutorial/intro.html#tax4fun for the installation description
+# and provide the file path of SILVA123
+t1$cal_tax4fun(folderReferenceData = "C:/Users/Dinos/Desktop/SILVA123/SILVA123")
+
+#View(t1$tax4fun_KO$Tax4FunProfile)
+
+# must transpose to taxa row, sample column
+pathway_file <- t1$tax4fun_path$Tax4FunProfile %>% t %>% as.data.frame
+# filter rownames, only keep ko+number
+rownames(pathway_file) %<>% gsub("(^.*);\\s.*", "\\1", .)
+# load the pathway hierarchical metadata
+data(Tax4Fun2_KEGG)
+# further create a microtable object, familiar?
+func1 <- microtable$new(otu_table = pathway_file, tax_table = Tax4Fun2_KEGG$ptw_desc, sample_table = t1$sample_table)
+print(func1)
+
+func1$tidy_dataset()
+# calculate abundance automatically at three levels: Level.1, Level.2, Level.3
+func1$cal_abund()
+
+func2 <- trans_abund$new(func1, taxrank = "Level.1", groupmean = "Substrate")
+func2$plot_bar(legend_text_italic = FALSE)
+
+func2 <- trans_diff$new(dataset = func1, method = "lefse", group = "Substrate", alpha = 0.05, lefse_subgroup = NULL)
+func2$plot_diff_bar(threshold = 2, width = 0.8)
+
+```
+
